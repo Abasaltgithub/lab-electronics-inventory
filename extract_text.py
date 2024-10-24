@@ -8,7 +8,7 @@ import pyheif
 from datetime import datetime
 
 # Set Google Cloud Vision API credentials
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/abasaltbahrami/Desktop/lab-electronics-inventory/aharonilab-6a8ce0875b69.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/abasaltbahrami/Desktop/JSON_file/aharonilab-6a8ce0875b69.json"
 
 # Initialize a Vision API client
 client = vision.ImageAnnotatorClient()
