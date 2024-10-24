@@ -50,7 +50,7 @@ def is_description(line):
 # Helper function to search within blocks of text
 
 
-def search_in_blocks(blocks, search_patterns, search_by_name):
+def search_in_blocks(blocks, search_patterns, search_by_name, location):
     results = []
 
     for block in blocks:
@@ -77,24 +77,18 @@ def search_in_blocks(blocks, search_patterns, search_by_name):
                                 block_lines[i + 2].strip()
                         break
 
-            # Extract image name (if exists)
-            image_match = re.search(r'IMG_\d+\.jpg', block)
-
-            # If part number is not found, use "P/N not detected" with image name
+            # If part number is not found, use "P/N not detected"
             if not part_number_match:
-                image_name = image_match.group(
-                    0) if image_match else "Unknown Image"
-                part_number = f"P/N not detected -- {image_name}"
+                part_number = f"P/N not detected"
             else:
                 part_number = part_number_match.group(1)
 
             value = desc_match if isinstance(desc_match, str) else (
                 desc_match.group(1) if desc_match else "Description not available")
-            image_name = image_match.group(
-                0) if image_match else "Unknown Image"
 
+            # Append result with location (instead of image name)
             results.append({"part_number": part_number,
-                           "value": value, "image": image_name})
+                           "value": value, "location": location})
 
     return results
 
@@ -133,7 +127,7 @@ def search_file(part_number_query, value_query):
         if not file_content.startswith("Failed to fetch"):
             blocks = file_content.split("Image:")
             results.extend(search_in_blocks(
-                blocks, search_patterns, search_by_name))
+                blocks, search_patterns, search_by_name, name.capitalize()))
 
     return results
 
@@ -155,7 +149,7 @@ if st.button("Search"):
             st.write(f"Search completed. Found {len(results)} items.")
             for result in results:
                 st.write(
-                    f"**Part Number**: {result['part_number']} | **Description**: {result['value']} | **Image**: {result['image']}")
+                    f"**Part Number**: {result['part_number']} | **Description**: {result['value']} | **Location**: {result['location']}")
         else:
             st.write("No matches found.")
     else:
