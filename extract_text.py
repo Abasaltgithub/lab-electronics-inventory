@@ -8,23 +8,15 @@ import pyheif
 from datetime import datetime
 
 # Set Google Cloud Vision API credentials
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/abasaltbahrami/Desktop/JSON_file/aharonilab-6a8ce0875b69.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/abasaltbahrami/Desktop/aharonilab-8a8c472b70e5.json"
 
 # Initialize a Vision API client
 client = vision.ImageAnnotatorClient()
 
 # Directories and output files
-heic_source_directory = '/Users/abasaltbahrami/Desktop/lab-electronics-inventory/files/Hemal'
+heic_source_directory = '/Users/abasaltbahrami/Desktop/lab-electronics-inventory/files'
 converted_image_directory = '/Users/abasaltbahrami/Desktop/lab-electronics-inventory/converted_to_jpeg'
 base_output_dir = '/Users/abasaltbahrami/Desktop/lab-electronics-inventory/'
-
-# Extract the last word (directory name) from the heic_source_directory
-last_word = os.path.basename(heic_source_directory)
-
-# Create a unique output file name based on the last word
-output_txt_file = f'{base_output_dir}extracted_texts_{last_word}.txt'
-
-# Now output_txt_file will be '/Users/abasaltbahrami/Desktop/lab-electronics-inventory/extracted_texts_Federico.txt'
 
 
 def load_all_processed_files(base_dir):
@@ -119,16 +111,30 @@ def process_images_in_directory(directory, txt_output, processed_files):
                     print(f"Text from {filename} saved.")
 
 
-# Load the list of previously processed files from all extracted_texts_xxx.txt files
-processed_files = load_all_processed_files(base_output_dir)
+def process_all_subfolders(base_source_directory, base_output_dir):
+    """Recursively process all HEIC files in subfolders and extract text from images."""
+    # Load the list of previously processed files from all extracted_texts_xxx.txt files
+    processed_files = load_all_processed_files(base_output_dir)
 
-# Convert .heic images to .jpg before processing, skipping previously processed files
-total_converted = convert_heic_to_jpg(
-    heic_source_directory, converted_image_directory, processed_files)
+    # Walk through the base directory and all its subdirectories
+    for root, dirs, files in os.walk(base_source_directory):
+        # Get the last part of the directory path
+        last_word = os.path.basename(root)
+        output_txt_file = f'{base_output_dir}extracted_texts_{last_word}.txt'
 
-# Process all images and save their text outputs, skipping previously processed files
-process_images_in_directory(
-    converted_image_directory, output_txt_file, processed_files)
+        print(f"Processing folder: {root}")
 
-# Print the total number of images processed
-print(f"Total images processed: {total_converted}")
+        # Convert HEIC images to JPG, skipping previously processed files
+        total_converted = convert_heic_to_jpg(
+            root, converted_image_directory, processed_files)
+
+        # Process all JPG/PNG images and save their text outputs, skipping previously processed files
+        process_images_in_directory(
+            converted_image_directory, output_txt_file, processed_files)
+
+        # Print the total number of images processed for the current folder
+        print(f"Total images processed in {root}: {total_converted}")
+
+
+# Start processing all subfolders
+process_all_subfolders(heic_source_directory, base_output_dir)
