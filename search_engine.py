@@ -69,8 +69,10 @@ def search_file():
     urls = {
         'workshop': workshop_file_url,
         'federico': federico_file_url,
+        'federico_printer_room': federico_printer_room_url,
         'marcel': marcel_file_url,
-        'hemal': hemal_file_url
+        'hemal': hemal_file_url,
+        'abasalt': abasalt_file_url
     }
 
     # Determine if the value_query is a specific name (e.g., "marcel")
@@ -160,10 +162,12 @@ def search_file():
 
 
 # Firebase Storage URLs for Workshop, Federico, and Marcel
-workshop_file_url = "https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Workshop.txt?alt=media&token=4c67ff8b-f207-4fec-b585-c007518bb976"
-federico_file_url = "https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Federico.txt?alt=media&token=ee37dbb4-44c8-4a82-8ceb-7c9ce8859688"
-marcel_file_url = "https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Marcel.txt?alt=media&token=0e9da0d2-8f8f-451d-9108-4e2283634894"
-hemal_file_url = "https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Hemal.txt?alt=media&token=591df834-ef7c-4bb3-a1f4-d7bb5fef9acd"
+workshop_file_url = "https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Workshop.txt?alt=media&token=8e13dd3c-3c8a-4bdd-80ac-c33d6aae6d39"
+federico_file_url = "https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Federico.txt?alt=media&token=134d8ab3-afe3-4920-92ab-6051efdd0cf7"
+marcel_file_url = "https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Marcel.txt?alt=media&token=c6e8decd-ec31-4d87-a4d7-b62dca6b7ca4"
+hemal_file_url = "https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Hemal.txt?alt=media&token=b55bd4bc-a545-4c7b-9eb8-ab8afd99c3a6"
+abasalt_file_url = "https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Abasalt.txt?alt=media&token=0c2d0e64-a0cb-4108-b87f-c97d7d858447"
+federico_printer_room_url = "https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Federico_printer_room.txt?alt=media&token=9609fca0-02fa-450c-b980-e47a5012b316"
 # Set up the main window
 root = tk.Tk()
 root.title("Component Search Interface")
