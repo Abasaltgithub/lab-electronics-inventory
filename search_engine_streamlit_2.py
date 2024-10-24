@@ -131,6 +131,20 @@ def search_file(part_number_query, value_query):
 
     return results
 
+# Function to format output as a left-aligned table
+
+
+def format_results_as_table(results):
+    # Define column headers with fixed width for alignment
+    header = f"{'Part Number':<20} {'Description':<40} {'Location':<15}\n"
+    table = header + "-"*75 + "\n"  # Create table header with underline
+
+    # Add each result row with left alignment
+    for result in results:
+        table += f"{result['part_number']:<20} {result['value']:<40} {result['location']:<15}\n"
+
+    return table
+
 
 # Streamlit Web App Interface
 st.title("Component Search Tool")
@@ -147,9 +161,9 @@ if st.button("Search"):
         # Display results
         if results:
             st.write(f"Search completed. Found {len(results)} items.")
-            for result in results:
-                st.write(
-                    f"**Part Number**: {result['part_number']} | **Description**: {result['value']} | **Location**: {result['location']}")
+            formatted_table = format_results_as_table(results)
+            # Display as a preformatted text block
+            st.markdown(f"```text\n{formatted_table}\n```")
         else:
             st.write("No matches found.")
     else:
