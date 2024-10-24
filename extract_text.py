@@ -8,13 +8,13 @@ import pyheif
 from datetime import datetime
 
 # Set Google Cloud Vision API credentials
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/abasaltbahrami/Desktop/lab-electronics-inventory/aharonilab-9410614763f1.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/abasaltbahrami/Desktop/lab-electronics-inventory/aharonilab-6a8ce0875b69.json"
 
 # Initialize a Vision API client
 client = vision.ImageAnnotatorClient()
 
 # Directories and output files
-heic_source_directory = '/Users/abasaltbahrami/Desktop/lab-electronics-inventory/files/Marcel'
+heic_source_directory = '/Users/abasaltbahrami/Desktop/lab-electronics-inventory/files/Hemal'
 converted_image_directory = '/Users/abasaltbahrami/Desktop/lab-electronics-inventory/converted_to_jpeg'
 base_output_dir = '/Users/abasaltbahrami/Desktop/lab-electronics-inventory/'
 

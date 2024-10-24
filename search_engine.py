@@ -69,7 +69,8 @@ def search_file():
     urls = {
         'workshop': workshop_file_url,
         'federico': federico_file_url,
-        'marcel': marcel_file_url
+        'marcel': marcel_file_url,
+        'hemal': hemal_file_url
     }
 
     # Determine if the value_query is a specific name (e.g., "marcel")
@@ -162,7 +163,7 @@ def search_file():
 workshop_file_url = "https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Workshop.txt?alt=media&token=4c67ff8b-f207-4fec-b585-c007518bb976"
 federico_file_url = "https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Federico.txt?alt=media&token=ee37dbb4-44c8-4a82-8ceb-7c9ce8859688"
 marcel_file_url = "https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Marcel.txt?alt=media&token=0e9da0d2-8f8f-451d-9108-4e2283634894"
-
+hemal_file_url = "https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Hemal.txt?alt=media&token=591df834-ef7c-4bb3-a1f4-d7bb5fef9acd"
 # Set up the main window
 root = tk.Tk()
 root.title("Component Search Interface")
