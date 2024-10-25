@@ -2,10 +2,12 @@ import streamlit as st
 import requests
 import re
 
-# Function to fetch file content from a URL
+# Cache data to avoid repeated downloading
 
 
+@st.cache_data
 def fetch_file_content_from_url(url):
+    """Fetches content from a file URL, caches the result."""
     response = requests.get(url)
     if response.status_code == 200:
         return response.text
@@ -20,28 +22,11 @@ def is_description(line):
     Identifies if a line is likely a component description based on common patterns.
     """
     description_patterns = [
-        r'\bDESC\b',
-        r'\bPart Description\b',
-        r'\bCIC\b',
-        r'\bESC\b',
-        r'\bSC\b',
-        r'\bCAP\b',
-        r'\bRES\b',
-        r'\bIC\b',
-        r'\bLED\b',
-        r'\bDIODE\b',
-        r'\bMOSFET\b',
-        r'\bREF DES\b',
-        r'\bTEST POINT\b',
-        r'\bSCHOTTKY\b',
-        r'\bARRAY\b',
-        r'\bREG LINEAR\b',
-        r'\bPOS ADJ\b',
-        r'\bLENS\b',
-        r'\bCHROMA\b',
-        r'\bASPHERE\b',
-        r'\bPRISM\b',
-        r'\bOPTICS\b',
+        r'\bDESC\b', r'\bPart Description\b', r'\bCIC\b', r'\bESC\b', r'\bSC\b', r'\bCAP\b', r'\bRES\b',
+        r'\bIC\b', r'\bLED\b', r'\bDIODE\b', r'\bMOSFET\b', r'\bREF DES\b', r'\bTEST POINT\b',
+        r'\bSCHOTTKY\b', r'\bARRAY\b', r'\bREG LINEAR\b', r'\bPOS ADJ\b',
+        # New patterns for optical elements
+        r'\bLENS\b', r'\bCHROMA\b', r'\bASPHERE\b', r'\bPRISM\b', r'\bOPTICS\b',
     ]
     description_regex = re.compile(
         '|'.join(description_patterns), re.IGNORECASE)
@@ -51,13 +36,14 @@ def is_description(line):
 
 
 def search_in_blocks(blocks, search_patterns, search_by_name, location):
+    """Searches for part numbers and descriptions in blocks of text."""
     results = []
 
     for block in blocks:
         if not block.strip():
             continue
 
-        # If we're searching by name, include all blocks, else apply patterns
+        # If we're searching by name, include all blocks; otherwise, check patterns
         if search_by_name or all(pattern.search(block) for pattern in search_patterns):
             # Extract part number
             part_number_match = re.search(
@@ -78,17 +64,14 @@ def search_in_blocks(blocks, search_patterns, search_by_name, location):
                         break
 
             # If part number is not found, use "P/N not detected"
-            if not part_number_match:
-                part_number = f"P/N not detected"
-            else:
-                part_number = part_number_match.group(1)
+            part_number = part_number_match.group(
+                1) if part_number_match else "P/N not detected"
+            value = desc_match if isinstance(
+                desc_match, str) else "Description not available"
 
-            value = desc_match if isinstance(desc_match, str) else (
-                desc_match.group(1) if desc_match else "Description not available")
-
-            # Append result with location (instead of image name)
-            results.append({"part_number": part_number,
-                           "value": value, "location": location})
+            # Append result with location
+            results.append({"Part Number": part_number,
+                           "Description": value, "Location": location})
 
     return results
 
@@ -97,10 +80,12 @@ def search_in_blocks(blocks, search_patterns, search_by_name, location):
 
 def search_file(part_number_query, value_query):
     urls = {
-        'workshop': 'https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Workshop.txt?alt=media&token=4c67ff8b-f207-4fec-b585-c007518bb976',
-        'federico': 'https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Federico.txt?alt=media&token=ee37dbb4-44c8-4a82-8ceb-7c9ce8859688',
-        'marcel': 'https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Marcel.txt?alt=media&token=0e9da0d2-8f8f-451d-9108-4e2283634894',
-        'hemal': 'https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Hemal.txt?alt=media&token=591df834-ef7c-4bb3-a1f4-d7bb5fef9acd'
+        'workshop': 'https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Workshop.txt?alt=media&token=8e13dd3c-3c8a-4bdd-80ac-c33d6aae6d39',
+        'federico': 'https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Federico.txt?alt=media&token=134d8ab3-afe3-4920-92ab-6051efdd0cf7',
+        'federico_printer_room': 'https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Federico_printer_room.txt?alt=media&token=9609fca0-02fa-450c-b980-e47a5012b316',
+        'marcel': 'https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Marcel.txt?alt=media&token=c6e8decd-ec31-4d87-a4d7-b62dca6b7ca4',
+        'hemal': 'https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Hemal.txt?alt=media&token=b55bd4bc-a545-4c7b-9eb8-ab8afd99c3a6',
+        'abasalt': 'https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts_Abasalt.txt?alt=media&token=0c2d0e64-a0cb-4108-b87f-c97d7d858447',
     }
 
     # Prepare search patterns
@@ -112,7 +97,7 @@ def search_file(part_number_query, value_query):
         search_patterns.append(re.compile(
             rf'\b{re.escape(value_query)}\b', re.IGNORECASE))
 
-    # If searching by name (e.g., "marcel"), restrict to that file
+    # Determine if searching by name
     search_by_name = value_query.lower() in urls
 
     if search_by_name:
@@ -132,20 +117,6 @@ def search_file(part_number_query, value_query):
 
     return results
 
-# Function to format output as a left-aligned table
-
-
-def format_results_as_table(results):
-    # Define column headers with fixed width for alignment
-    header = f"{'Part Number':<20} {'Description':<40} {'Location':<15}\n"
-    table = header + "-"*75 + "\n"  # Create table header with underline
-
-    # Add each result row with left alignment
-    for result in results:
-        table += f"{result['part_number']:<20} {result['value']:<40} {result['location']:<15}\n"
-
-    return table
-
 
 # Streamlit Web App Interface
 st.title("Component Search Tool")
@@ -162,9 +133,7 @@ if st.button("Search"):
         # Display results
         if results:
             st.write(f"Search completed. Found {len(results)} items.")
-            formatted_table = format_results_as_table(results)
-            # Display as a preformatted text block
-            st.markdown(f"```text\n{formatted_table}\n```")
+            st.table(results)  # Display as a table for better readability
         else:
             st.write("No matches found.")
     else:
