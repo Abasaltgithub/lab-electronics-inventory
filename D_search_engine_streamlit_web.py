@@ -5,7 +5,7 @@ from datetime import datetime
 import requests
 import re
 
-# Firebase initialization using Streamlit secrets
+# Firebase initialization using secrets
 if not firebase_admin._apps:
     cred = credentials.Certificate({
         "type": st.secrets["firebase"]["type"],
@@ -123,11 +123,12 @@ if st.button("Search"):
         results = search_in_blocks(blocks, part_number_query, value_query, footprint_query)
         if results:
             st.write("### Search Results")
-            for part_number, value, location in results:
+            for index, (part_number, value, location) in enumerate(results):
                 st.write(f"- **Part Number:** {part_number}, **Description:** {value}, **Location:** {location}")
-                if st.button(f"Re-Order '{part_number}'", key=part_number):
-                    with st.form(f"reorder_form_{part_number}"):
-                        requester_name = st.text_input("Requester Name", key=f"requester_{part_number}")
+                # Ensure unique key by appending index to the part_number
+                if st.button(f"Re-Order '{part_number}'", key=f"{part_number}_{index}"):
+                    with st.form(f"reorder_form_{part_number}_{index}"):
+                        requester_name = st.text_input("Requester Name", key=f"requester_{part_number}_{index}")
                         submit_reorder = st.form_submit_button("Submit Re-Order")
                         if submit_reorder:
                             reorder_item(part_number, value, requester_name)
