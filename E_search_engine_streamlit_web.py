@@ -64,7 +64,7 @@ def reorder_item(part_number, description, requester_name):
         st.error(f"Failed to save re-order request: {e}")
 
 # Streamlit Interface
-st.title("Component Search and Reorder Tool")
+st.title("Inventory Search Tool")
 
 # Inputs for search
 st.write("### Search for Components")
