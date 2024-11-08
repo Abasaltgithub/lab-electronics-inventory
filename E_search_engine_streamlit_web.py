@@ -4,7 +4,6 @@ import requests
 import re
 import firebase_admin
 from firebase_admin import credentials, storage
-import time
 
 # Firebase initialization using Streamlit secrets
 if not firebase_admin._apps:
@@ -24,13 +23,11 @@ if not firebase_admin._apps:
         'storageBucket': 'aharonilabinventory.appspot.com'
     })
 
-# Function to fetch file content from a single URL
+# Function to fetch file content from Firebase Storage
 @st.cache_data
 def fetch_file_content():
     url = "https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts.txt?alt=media"
-    start_time = time.time()
     response = requests.get(url)
-    st.write(f"Fetched data in {time.time() - start_time} seconds")
     if response.status_code == 200:
         return response.text
     else:
@@ -75,54 +72,50 @@ footprint_query = st.text_input("Enter Footprint")
 
 # Search button
 if st.button("Search"):
-    start_time = time.time()
     file_content = fetch_file_content()
-    st.write(f"Time taken to load content: {time.time() - start_time} seconds")
-    
     if file_content.startswith("Failed to fetch file"):
         st.error(file_content)
     else:
-        # Search logic
+        # Parse and search file content
         blocks = file_content.split("Image:")
         search_patterns = []
         if part_number_query:
             search_patterns.append(re.compile(rf'{re.escape(part_number_query)}(-ND)?', re.IGNORECASE))
         if value_query:
             value_query_cleaned = value_query.replace(" ", "")
-            value_query_pattern = ""
-            for i in range(len(value_query_cleaned) - 1):
-                value_query_pattern += value_query_cleaned[i]
-                if (value_query_cleaned[i].isdigit() and value_query_cleaned[i + 1].isalpha()) or \
-                        (value_query_cleaned[i].isalpha() and value_query_cleaned[i + 1].isdigit()):
-                    value_query_pattern += r"\s*"
-            value_query_pattern += value_query_cleaned[-1]
+            value_query_pattern = "".join(
+                [ch + r"\s*" if (i < len(value_query_cleaned) - 1 and
+                                 ((value_query_cleaned[i].isdigit() and value_query_cleaned[i + 1].isalpha()) or
+                                  (value_query_cleaned[i].isalpha() and value_query_cleaned[i + 1].isdigit())))
+                 else ch
+                 for i, ch in enumerate(value_query_cleaned)]
+            )
             search_patterns.append(re.compile(fr'\b{value_query_pattern}\b', re.IGNORECASE))
         if footprint_query:
             search_patterns.append(re.compile(rf'\b{re.escape(footprint_query)}\b', re.IGNORECASE))
 
+        # Display search results
         results = []
         for block in blocks:
-            if not block.strip():
-                continue
             if all(pattern.search(block) for pattern in search_patterns):
                 part_number_match = re.search(r'(?:Lot #|P/N|N):\s*([A-Za-z0-9\-\/# ]+)', block, re.IGNORECASE)
                 desc_match = re.search(r'DESC:\s*(.*)', block, re.IGNORECASE)
                 location_match = re.search(r'Location:\s*(.*)', block, re.IGNORECASE)
                 part_number = part_number_match.group(1) if part_number_match else "P/N not detected"
-                value = desc_match.group(1) if desc_match else "Description not available"
+                description = desc_match.group(1) if desc_match else "Description not available"
                 location = location_match.group(1) if location_match else "Location not available"
-                results.append((part_number, value, location))
+                results.append((part_number, description, location))
 
         if results:
             st.write("### Search Results")
-            for index, (part_number, value, location) in enumerate(results):
-                st.write(f"**Part Number:** {part_number}, **Description:** {value}, **Location:** {location}")
-                if st.button(f"Re-Order '{part_number}'", key=f"{part_number}_{index}"):
+            for index, (part_number, description, location) in enumerate(results):
+                st.write(f"**Part Number:** {part_number}, **Description:** {description}, **Location:** {location}")
+                if st.button(f"Re-Order '{part_number}'", key=f"reorder_{index}"):
                     with st.form(f"reorder_form_{part_number}_{index}"):
                         requester_name = st.text_input("Requester Name", key=f"requester_{part_number}_{index}")
                         submit_reorder = st.form_submit_button("Submit Re-Order")
                         if submit_reorder:
-                            reorder_item(part_number, value, requester_name)
+                            reorder_item(part_number, description, requester_name)
         else:
             st.warning("No items found matching the search criteria.")
             if st.button("Re-Order Manually"):
@@ -133,4 +126,3 @@ if st.button("Search"):
                     submit_reorder = st.form_submit_button("Submit Re-Order")
                     if submit_reorder:
                         reorder_item(part_number, description, requester_name)
-
