@@ -2,6 +2,7 @@ import streamlit as st
 from datetime import datetime
 import requests
 import re
+import pandas as pd
 import firebase_admin
 from firebase_admin import credentials, storage
 
@@ -33,6 +34,18 @@ def fetch_file_content():
     else:
         return f"Failed to fetch file: {response.status_code}"
 
+# Function to check if a line is a description
+def is_description(line):
+    description_patterns = [
+        r'\bDESC\b', r'\bPart Description\b', r'\bCIC\b', r'\bESC\b',
+        r'\bSC\b', r'\bCAP\b', r'\bRES\b', r'\bIC\b', r'\bLED\b',
+        r'\bDIODE\b', r'\bMOSFET\b', r'\bREF DES\b', r'\bTEST POINT\b',
+        r'\bSCHOTTKY\b', r'\bARRAY\b', r'\bREG LINEAR\b', r'\bPOS ADJ\b',
+        r'\bLENS\b', r'\bCHROMA\b', r'\bASPHERE\b', r'\bPRISM\b', r'\bOPTICS\b',
+    ]
+    description_regex = re.compile('|'.join(description_patterns), re.IGNORECASE)
+    return bool(description_regex.search(line))
+
 # Function to save re-order request to Firebase
 def reorder_item(part_number, description, requester_name):
     """Append the re-order request to Firebase Storage."""
@@ -48,16 +61,11 @@ def reorder_item(part_number, description, requester_name):
             existing_content = blob.download_as_text()
             # Append the new reorder entry
             re_order_text = existing_content + re_order_text
-            st.write("Appending to existing content.")
-        else:
-            st.write("Creating a new file for reorder requests.")
-
         # Upload the updated content
         blob.upload_from_string(re_order_text)
         st.success("Re-order request saved successfully.")
     except Exception as e:
         st.error(f"Failed to save re-order request: {e}")
-        st.write("Detailed Error:", e)
 
 # Streamlit Interface
 st.title("Component Search and Reorder Tool")
@@ -73,19 +81,51 @@ if st.button("Search"):
     if file_content.startswith("Failed to fetch file"):
         st.error(file_content)
     else:
-        # Process and display search results as before
-        # Omitted here for brevity
-        st.write("Search Results (Example):")  # Replace with actual search results processing
+        # Parse and search file content
+        blocks = file_content.split("Image:")
+        search_patterns = []
+        if part_number_query:
+            search_patterns.append(re.compile(rf'{re.escape(part_number_query)}(-ND)?', re.IGNORECASE))
+        if value_query:
+            value_query_cleaned = value_query.replace(" ", "")
+            value_query_pattern = "".join(
+                [ch + r"\s*" if (i < len(value_query_cleaned) - 1 and
+                                 ((value_query_cleaned[i].isdigit() and value_query_cleaned[i + 1].isalpha()) or
+                                  (value_query_cleaned[i].isalpha() and value_query_cleaned[i + 1].isdigit())))
+                 else ch
+                 for i, ch in enumerate(value_query_cleaned)]
+            )
+            search_patterns.append(re.compile(fr'\b{value_query_pattern}\b', re.IGNORECASE))
+        if footprint_query:
+            search_patterns.append(re.compile(rf'\b{re.escape(footprint_query)}\b', re.IGNORECASE))
 
-# Reorder Missing Parts section
-st.write("### Re-Order Missing Parts")
-with st.form("manual_reorder_form"):
-    part_number = st.text_input("Part Number")
-    description = st.text_input("Description")
-    requester_name = st.text_input("Requester Name")
-    submit_reorder = st.form_submit_button("Submit Re-Order")
-    if submit_reorder:
-        if part_number and description and requester_name:
-            reorder_item(part_number, description, requester_name)
+        # Search results
+        results = []
+        for block in blocks:
+            if all(pattern.search(block) for pattern in search_patterns):
+                part_number_match = re.search(r'(?:Lot #|P/N|N):\s*([A-Za-z0-9\-\/# ]+)', block, re.IGNORECASE)
+                desc_match = re.search(r'DESC:\s*(.*)', block, re.IGNORECASE)
+                location_match = re.search(r'Location:\s*(.*)', block, re.IGNORECASE)
+                part_number = part_number_match.group(1) if part_number_match else "P/N not detected"
+                description = desc_match.group(1) if desc_match else "Description not available"
+                location = location_match.group(1) if location_match else "Location not available"
+                results.append((part_number, description, location))
+
+        # Displaying results
+        if results:
+            st.write("### Search Results")
+            df_results = pd.DataFrame(results, columns=["Part Number", "Description", "Location"])
+            st.table(df_results)
         else:
-            st.warning("Please fill in all fields before submitting.")
+            st.warning("No items found matching the search criteria.")
+        
+        # Reorder missing parts
+        if not results:
+            st.write("### Re-Order Missing Parts")
+            with st.form("manual_reorder_form"):
+                part_number = st.text_input("Part Number")
+                description = st.text_input("Description")
+                requester_name = st.text_input("Requester Name")
+                submit_reorder = st.form_submit_button("Submit Re-Order")
+                if submit_reorder:
+                    reorder_item(part_number, description, requester_name)
