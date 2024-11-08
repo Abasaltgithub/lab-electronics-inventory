@@ -1,9 +1,9 @@
 import streamlit as st
+import firebase_admin
+from firebase_admin import credentials, storage
+from datetime import datetime
 import requests
 import re
-from datetime import datetime
-from firebase_admin import credentials, storage, initialize_app
-import firebase_admin
 
 # Firebase initialization using Streamlit secrets
 if not firebase_admin._apps:
