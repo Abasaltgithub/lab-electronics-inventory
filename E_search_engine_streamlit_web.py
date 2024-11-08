@@ -2,6 +2,7 @@ import streamlit as st
 from datetime import datetime
 import requests
 import re
+import pandas as pd
 import firebase_admin
 from firebase_admin import credentials, storage
 
@@ -94,7 +95,7 @@ if st.button("Search"):
         if footprint_query:
             search_patterns.append(re.compile(rf'\b{re.escape(footprint_query)}\b', re.IGNORECASE))
 
-        # Display search results
+        # Search results
         results = []
         for block in blocks:
             if all(pattern.search(block) for pattern in search_patterns):
@@ -106,24 +107,21 @@ if st.button("Search"):
                 location = location_match.group(1) if location_match else "Location not available"
                 results.append((part_number, description, location))
 
+        # Displaying results
         if results:
             st.write("### Search Results")
-            for index, (part_number, description, location) in enumerate(results):
-                st.write(f"**Part Number:** {part_number}, **Description:** {description}, **Location:** {location}")
-                if st.button(f"Re-Order '{part_number}'", key=f"reorder_{index}"):
-                    with st.form(f"reorder_form_{part_number}_{index}"):
-                        requester_name = st.text_input("Requester Name", key=f"requester_{part_number}_{index}")
-                        submit_reorder = st.form_submit_button("Submit Re-Order")
-                        if submit_reorder:
-                            reorder_item(part_number, description, requester_name)
+            df_results = pd.DataFrame(results, columns=["Part Number", "Description", "Location"])
+            st.table(df_results)
         else:
             st.warning("No items found matching the search criteria.")
-            if st.button("Re-Order Manually"):
-                with st.form("manual_reorder_form"):
-                    part_number = st.text_input("Part Number")
-                    description = st.text_input("Description")
-                    requester_name = st.text_input("Requester Name")
-                    submit_reorder = st.form_submit_button("Submit Re-Order")
-                    if submit_reorder:
-                        reorder_item(part_number, description, requester_name)
-
+        
+        # Reorder missing parts
+        if not results:
+            st.write("### Re-Order Missing Parts")
+            with st.form("manual_reorder_form"):
+                part_number = st.text_input("Part Number")
+                description = st.text_input("Description")
+                requester_name = st.text_input("Requester Name")
+                submit_reorder = st.form_submit_button("Submit Re-Order")
+                if submit_reorder:
+                    reorder_item(part_number, description, requester_name)
