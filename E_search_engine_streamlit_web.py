@@ -55,13 +55,9 @@ def reorder_item(part_number, description, requester_name):
     blob = bucket.blob('to_be_ordered.txt')
 
     try:
-        # Check if the file already exists
         if blob.exists():
-            # Download existing content
             existing_content = blob.download_as_text()
-            # Append the new reorder entry
             re_order_text = existing_content + re_order_text
-        # Upload the updated content
         blob.upload_from_string(re_order_text)
         st.success("Re-order request saved successfully.")
     except Exception as e:
@@ -71,6 +67,7 @@ def reorder_item(part_number, description, requester_name):
 st.title("Component Search and Reorder Tool")
 
 # Inputs for search
+st.write("### Search for Components")
 part_number_query = st.text_input("Enter Part Number")
 value_query = st.text_input("Enter Component Name / Value")
 footprint_query = st.text_input("Enter Footprint")
@@ -118,14 +115,16 @@ if st.button("Search"):
             st.table(df_results)
         else:
             st.warning("No items found matching the search criteria.")
-        
-        # Reorder missing parts
-        if not results:
-            st.write("### Re-Order Missing Parts")
-            with st.form("manual_reorder_form"):
-                part_number = st.text_input("Part Number")
-                description = st.text_input("Description")
-                requester_name = st.text_input("Requester Name")
-                submit_reorder = st.form_submit_button("Submit Re-Order")
-                if submit_reorder:
-                    reorder_item(part_number, description, requester_name)
+
+# Reorder Missing Parts section (always visible)
+st.write("### Re-Order Missing Parts")
+with st.form("manual_reorder_form"):
+    part_number = st.text_input("Part Number for Reorder")
+    description = st.text_input("Description for Reorder")
+    requester_name = st.text_input("Requester Name")
+    submit_reorder = st.form_submit_button("Submit Re-Order")
+    if submit_reorder:
+        if part_number and description and requester_name:
+            reorder_item(part_number, description, requester_name)
+        else:
+            st.warning("Please fill in all fields before submitting.")
