@@ -4,6 +4,7 @@ import requests
 import re
 import firebase_admin
 from firebase_admin import credentials, storage
+import time
 
 # Firebase initialization using Streamlit secrets
 if not firebase_admin._apps:
@@ -27,7 +28,9 @@ if not firebase_admin._apps:
 @st.cache_data
 def fetch_file_content():
     url = "https://firebasestorage.googleapis.com/v0/b/aharonilabinventory.appspot.com/o/extracted_texts.txt?alt=media"
+    start_time = time.time()
     response = requests.get(url)
+    st.write(f"Fetched data in {time.time() - start_time} seconds")
     if response.status_code == 200:
         return response.text
     else:
@@ -72,7 +75,10 @@ footprint_query = st.text_input("Enter Footprint")
 
 # Search button
 if st.button("Search"):
+    start_time = time.time()
     file_content = fetch_file_content()
+    st.write(f"Time taken to load content: {time.time() - start_time} seconds")
+    
     if file_content.startswith("Failed to fetch file"):
         st.error(file_content)
     else:
@@ -127,3 +133,4 @@ if st.button("Search"):
                     submit_reorder = st.form_submit_button("Submit Re-Order")
                     if submit_reorder:
                         reorder_item(part_number, description, requester_name)
+
