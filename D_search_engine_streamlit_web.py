@@ -1,4 +1,3 @@
-# Import necessary libraries
 import streamlit as st
 import requests
 import re
@@ -6,10 +5,20 @@ from datetime import datetime
 from firebase_admin import credentials, storage, initialize_app
 import firebase_admin
 
-# Firebase initialization
-cred_path = '/Users/abasaltbahrami/Desktop/aharonilabinventory-firebase-adminsdk-fu6uk-d6f7531b46.json'
+# Firebase initialization using Streamlit secrets
 if not firebase_admin._apps:
-    cred = credentials.Certificate(cred_path)
+    cred = credentials.Certificate({
+        "type": st.secrets["firebase"]["type"],
+        "project_id": st.secrets["firebase"]["project_id"],
+        "private_key_id": st.secrets["firebase"]["private_key_id"],
+        "private_key": st.secrets["firebase"]["private_key"].replace("\\n", "\n"),
+        "client_email": st.secrets["firebase"]["client_email"],
+        "client_id": st.secrets["firebase"]["client_id"],
+        "auth_uri": st.secrets["firebase"]["auth_uri"],
+        "token_uri": st.secrets["firebase"]["token_uri"],
+        "auth_provider_x509_cert_url": st.secrets["firebase"]["auth_provider_x509_cert_url"],
+        "client_x509_cert_url": st.secrets["firebase"]["client_x509_cert_url"]
+    })
     firebase_admin.initialize_app(cred, {
         'storageBucket': 'aharonilabinventory.appspot.com'
     })
@@ -116,16 +125,16 @@ if st.button("Search"):
             st.write("### Search Results")
             for part_number, value, location in results:
                 st.write(f"- **Part Number:** {part_number}, **Description:** {value}, **Location:** {location}")
-            if st.button("Re-Order Selected Item"):
-                with st.form("reorder_form"):
-                    requester_name = st.text_input("Requester Name")
-                    submit_reorder = st.form_submit_button("Submit Re-Order")
-                    if submit_reorder:
-                        reorder_item(part_number, value, requester_name)
+                if st.button(f"Re-Order '{part_number}'", key=part_number):
+                    with st.form(f"reorder_form_{part_number}"):
+                        requester_name = st.text_input("Requester Name", key=f"requester_{part_number}")
+                        submit_reorder = st.form_submit_button("Submit Re-Order")
+                        if submit_reorder:
+                            reorder_item(part_number, value, requester_name)
         else:
             st.warning("No items found matching the search criteria.")
-            if st.button("Re-Order"):
-                with st.form("reorder_form"):
+            if st.button("Re-Order Manually"):
+                with st.form("manual_reorder_form"):
                     part_number = st.text_input("Part Number")
                     description = st.text_input("Description")
                     requester_name = st.text_input("Requester Name")
